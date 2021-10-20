@@ -22,29 +22,42 @@ func Test_ElementToArticle(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
-	h := &dummyHandler{
-		[]byte(`<a href="/blah/blah"><h3>Blah Blah</h2></a>`),
+	type testCase struct {
+		html []byte
 	}
-	server := httptest.NewServer(h)
-	defer server.Close()
-	client := server.Client()
-
-	var err error
-	var article *Article
-	c := colly.NewCollector()
-	c.SetClient(client)
-	c.OnHTML("a", func(e *colly.HTMLElement) {
-		article, err = elementToArticle(e, "http://example.com")
-	})
-
-	visitErr := c.Visit(server.URL)
-	assert.Nil(visitErr)
-
-	assert.Nil(err)
-	assert.NotNil(article)
-	if article == nil {
-		return
+	testCases := []testCase{
+		testCase{html: []byte(`<a href="/blah/blah"><h2>Blah Blah</h2></a>`)},
+		testCase{html: []byte(`<a href="/blah/blah"><h3>Blah Blah</h3></a>`)},
 	}
-	assert.Equal("http://example.com/blah/blah", article.URL.String())
-	assert.Equal("Blah Blah", article.Title)
+
+	for i, tc := range testCases {
+		t.Logf("test case %d", i)
+		func() {
+			h := &dummyHandler{
+				[]byte(tc.html),
+			}
+			server := httptest.NewServer(h)
+			defer server.Close()
+			client := server.Client()
+
+			var err error
+			var article *Article
+			c := colly.NewCollector()
+			c.SetClient(client)
+			c.OnHTML("a", func(e *colly.HTMLElement) {
+				article, err = elementToArticle(e, "http://example.com")
+			})
+
+			visitErr := c.Visit(server.URL)
+			assert.Nil(visitErr)
+
+			assert.Nil(err)
+			assert.NotNil(article)
+			if article == nil {
+				return
+			}
+			assert.Equal("http://example.com/blah/blah", article.URL.String())
+			assert.Equal("Blah Blah", article.Title)
+		}()
+	}
 }
