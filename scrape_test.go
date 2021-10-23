@@ -56,7 +56,7 @@ func Test_ElementToArticle(t *testing.T) {
 			if article == nil {
 				return
 			}
-			assert.Equal("http://example.com/blah/blah", article.URL.String())
+			assert.Equal("http://example.com/blah/blah", jsonURLToURL(article.URL).String())
 			assert.Equal("Blah Blah", article.Title)
 		}()
 	}
