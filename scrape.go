@@ -19,7 +19,6 @@ func elementToArticle(e *colly.HTMLElement, baseURL string, t time.Time) (*Artic
 	a := new(Article)
 
 	href := e.Attr("href")
-	fmt.Println("x-alpha: ", href)
 	if href == "" {
 		return nil, fmt.Errorf("element has no or empty href value")
 	}
