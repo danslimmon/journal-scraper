@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -10,10 +11,11 @@ import (
 // elementToArticle takes an HTML element and returns a corresponding *Article.
 //
 // e corresponds to an <a> tag with the ".issue-item__title" class. baseURL is the base URL of the
-// scrape (e.g. "https://onlinelibrary.wiley.com/").
+// scrape (e.g. "https://onlinelibrary.wiley.com/"). t is the time we should set as the Article's
+// FirstSeen value.
 //
 // If an *Article can't be inferred from the element, we return nil.
-func elementToArticle(e *colly.HTMLElement, baseURL string) (*Article, error) {
+func elementToArticle(e *colly.HTMLElement, baseURL string, t time.Time) (*Article, error) {
 	a := new(Article)
 
 	href := e.Attr("href")
@@ -41,16 +43,19 @@ func elementToArticle(e *colly.HTMLElement, baseURL string) (*Article, error) {
 	}
 	a.Title = title
 
+	a.FirstSeen = t
+
 	return a, nil
 }
 
 func main() {
 	c := colly.NewCollector()
 	articles := make([]*Article, 0)
+	now := time.Now().UTC()
 
 	// Each article has an <a>
 	c.OnHTML("a.issue-item__title", func(e *colly.HTMLElement) {
-		article, _ := elementToArticle(e, "https://onlinelibrary.wiley.com/")
+		article, _ := elementToArticle(e, "https://onlinelibrary.wiley.com/", now)
 		if article == nil {
 			// This is screen scraping, which is always chaotic. We can't afford to be panicking on
 			// every error.

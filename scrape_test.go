@@ -42,10 +42,12 @@ func Test_ElementToArticle(t *testing.T) {
 
 			var err error
 			var article *Article
+			t := mustTimeParse("2006-01-02T15:04:05Z", "2006-01-02T15:04:05Z")
+
 			c := colly.NewCollector()
 			c.SetClient(client)
 			c.OnHTML("a", func(e *colly.HTMLElement) {
-				article, err = elementToArticle(e, "http://example.com")
+				article, err = elementToArticle(e, "http://example.com", t)
 			})
 
 			visitErr := c.Visit(server.URL)
