@@ -52,3 +52,23 @@ func Test_NewArticleList_Limit(t *testing.T) {
 		assert.True(list.Articles[i].FirstSeen.After(refTime))
 	}
 }
+
+// This test makes sure that, if the number of scraped articles  is less than limit, we don't
+// pad the ArticleList out with nils.
+func Test_NewArticleList_Length(t *testing.T) {
+	t.Parallel()
+	assert := assert.New(t)
+
+	articles := make([]*Article, 3)
+	t0 := mustTimeParse("2006-01-02T15:04:05Z00:00", "2021-10-14T00:00:00Z00:00")
+	for i := 0; i < len(articles); i++ {
+		articles[i] = &Article{
+			Title:     "blah",
+			URL:       new(JSONURL),
+			FirstSeen: t0.Add(time.Duration(i*24) * time.Hour),
+		}
+	}
+
+	list := NewArticleList(articles, 10)
+	assert.Equal(3, len(list.Articles))
+}

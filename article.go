@@ -45,9 +45,16 @@ func NewArticleList(articles []*Article, limit int) *ArticleList {
 	copy(sorted, articles)
 	sort.Sort(sortableArticleSlice(sorted))
 
+	min := func(a, b int) int {
+		if a < b {
+			return a
+		}
+		return b
+	}
+
 	// trim
 	list := new(ArticleList)
-	list.Articles = make([]*Article, limit)
+	list.Articles = make([]*Article, min(len(articles), limit))
 	copy(list.Articles, sorted)
 
 	return list
