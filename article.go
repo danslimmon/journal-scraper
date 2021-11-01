@@ -26,7 +26,7 @@ func (articles sortableArticleSlice) Swap(i, j int) {
 	articles[i], articles[j] = articles[j], articles[i]
 }
 
-// ArticleList is the struct that gets marshaled into a file by writeBlob
+// ArticleList is the struct that gets marshaled into a file
 type ArticleList struct {
 	Articles []*Article `json:"articles"`
 	Limit    int
