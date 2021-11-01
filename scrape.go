@@ -71,7 +71,12 @@ func main() {
 		panic("Ended up with an article list that's too short to be correct")
 	}
 
-	if err := writeBlob("/tmp/articles.json", articles, 1000); err != nil {
+	as := NewDiskArticleStore("/tmp/articles.json", 1000)
+	if err := as.Load(); err != nil {
+		panic(err.Error())
+	}
+	as.Add(articles)
+	if err := as.Save(); err != nil {
 		panic(err.Error())
 	}
 }

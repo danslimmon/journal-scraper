@@ -29,33 +29,50 @@ func (articles sortableArticleSlice) Swap(i, j int) {
 // ArticleList is the struct that gets marshaled into a file by writeBlob
 type ArticleList struct {
 	Articles []*Article `json:"articles"`
+	Limit    int
 }
 
-// NewArticleList returns an ArticleList with the given Articles.
+// Merge adds newArticles to the ArticleList.
 //
-// The Articles will be ordered descending by Article.FirstSeen and limited to the first limit
-// elements. If limit is 0, all elements are included.
-func NewArticleList(articles []*Article, limit int) *ArticleList {
-	if limit == 0 {
-		limit = len(articles)
+// The Articles will be deduped (by URL, ordered descending by Article.FirstSeen, and limited to the
+// first list.Limit elements. If list.Limit is 0, all elements are included.)
+func (list *ArticleList) Merge(newArticles []*Article) {
+	list.Articles = append(list.Articles, newArticles...)
+
+	// dedupe
+	urls := make(map[string]bool)
+	for i := 0; i < len(list.Articles); i++ {
+		a := list.Articles[i]
+		urlString := jsonURLToURL(a.URL).String()
+		if _, ok := urls[urlString]; ok {
+			list.Articles[i] = list.Articles[len(list.Articles)-1]
+			list.Articles = list.Articles[:len(list.Articles)-1]
+		} else {
+			urls[urlString] = true
+		}
 	}
 
 	// sort
-	sorted := make([]*Article, len(articles))
-	copy(sorted, articles)
+	sorted := make([]*Article, len(list.Articles))
+	copy(sorted, list.Articles)
 	sort.Sort(sortableArticleSlice(sorted))
 
+	// trim
 	min := func(a, b int) int {
 		if a < b {
 			return a
 		}
 		return b
 	}
-
-	// trim
-	list := new(ArticleList)
-	list.Articles = make([]*Article, min(len(articles), limit))
+	limit := min(len(list.Articles), list.Limit)
+	if limit == 0 {
+		limit = len(list.Articles)
+	}
+	list.Articles = make([]*Article, limit)
 	copy(list.Articles, sorted)
+}
 
-	return list
+// NewArticleList returns a new, empty ArticleList.
+func NewArticleList(limit int) *ArticleList {
+	return &ArticleList{Limit: limit}
 }

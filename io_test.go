@@ -37,7 +37,7 @@ func Test_JSONURL_UnmarshalJSON(t *testing.T) {
 	assert.Equal(u, rslt)
 }
 
-func Test_WriteBlob(t *testing.T) {
+func Test_DiskArticleStore(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
@@ -55,15 +55,19 @@ func Test_WriteBlob(t *testing.T) {
 
 	f, err := ioutil.TempFile("", "journal-scraper-test-")
 	assert.Nil(err)
-	err = writeBlob(f.Name(), articles, 0)
-	assert.Nil(err)
+	f.Close()
 
-	b, err := ioutil.ReadFile(f.Name())
-	assert.Nil(err)
+	as := NewDiskArticleStore(f.Name(), 3)
+	// This initial Load() is called on a nonexistent file
+	assert.Nil(as.Load())
+	as.Add(articles)
+	assert.Nil(as.Save())
 
-	list := new(ArticleList)
-	err = json.Unmarshal(b, list)
-	assert.Nil(err)
+	// Now read back what we wrote
+	as.Load()
+	das, ok := as.(*DiskArticleStore)
+	assert.True(ok)
+	list := das.articleList
 	assert.Equal(2, len(list.Articles))
 	for i := range list.Articles {
 		assert.Equal(articles[i], list.Articles[i])
