@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -71,7 +72,21 @@ func main() {
 		panic("Ended up with an article list that's too short to be correct")
 	}
 
-	as := NewDiskArticleStore("/tmp/articles.json", 1000)
+	bucket := os.Getenv("JS_S3_BUCKET")
+	if bucket == "" {
+		panic("Missing required JS_S3_BUCKET environment variable")
+	}
+	key := os.Getenv("JS_S3_KEY")
+	if key == "" {
+		panic("Missing required JS_S3_KEY environment variable")
+	}
+	region := os.Getenv("JS_S3_REGION")
+	if region == "" {
+		panic("Missing required JS_S3_REGION environment variable")
+	}
+	os.Setenv("AWS_REGION", region)
+
+	as := NewS3ArticleStore(bucket, key, 1000)
 	if err := as.Load(); err != nil {
 		panic(err.Error())
 	}
